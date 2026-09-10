@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "high": [
+    {"id": "analysis-tag", "pattern": "(?i)<\\/?analysis>|chain[- ]of[- ]thought|scratchpad|internal reasoning"},
+    {"id": "user-deliberation", "pattern": "(?i)\\bthe user (wants|asked|needs|is asking)\\b"},
+    {"id": "explicit-deliberation", "pattern": "(?i)\\b(let me (think|reason|inspect|check|figure|analy[sz]e)|let['’]?s (think|reason) through)\\b"},
+    {"id": "pre-answer-deliberation", "pattern": "(?i)\\b(before answering|first,? i need to|i need to determine|i need to inspect|my approach will be)\\b"}
+  ],
+  "medium": [
+    {"id": "first-person-obligation", "pattern": "(?i)\\b(i should|i need to|maybe i should|i think i need)\\b"},
+    {"id": "collective-deliberation", "pattern": "(?i)\\b(we need to figure|we should probably)\\b"},
+    {"id": "reasoning-label", "pattern": "(?i)^(\\s*)(analysis|reasoning|thinking|internal note)\\s*:"}
+  ],
+  "exclude_globs": [
+    ".git/**",
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    "vendor/**",
+    "coverage/**",
+    "*.lock",
+    "package-lock.json",
+    "scanner/tests/fixtures/**",
+    "docs/reasoning-trace-examples.md"
+  ],
+  "binary_extensions": [
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".pdf", ".zip", ".gz", ".tar", ".woff", ".woff2", ".ttf", ".ico", ".mp3", ".mp4", ".mov", ".sqlite", ".db"
+  ],
+  "suppression_token": "reasoning-trace-audit: ignore-next-line"
+}
