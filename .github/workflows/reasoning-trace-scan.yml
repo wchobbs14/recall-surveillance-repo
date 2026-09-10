@@ -1,0 +1,86 @@
+name: Reasoning Trace Hygiene
+
+on:
+  workflow_call:
+    inputs:
+      fail_on:
+        description: Severity that fails the workflow (high, medium, none)
+        required: false
+        default: high
+        type: string
+      changed_files_only:
+        description: Scan only changed files when invoked from a PR
+        required: false
+        default: true
+        type: boolean
+  workflow_dispatch:
+    inputs:
+      fail_on:
+        description: Severity that fails the workflow
+        required: false
+        default: high
+        type: choice
+        options: [high, medium, none]
+      changed_files_only:
+        description: Scan only changed files for PR contexts
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out target repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check out reasoning-trace scanner
+        uses: actions/checkout@v4
+        with:
+          repository: wchobbs14/recall-surveillance-repo
+          path: .reasoning-trace-audit
+          sparse-checkout: |
+            scanner
+          sparse-checkout-cone-mode: true
+
+      - name: Select scan scope
+        id: scope
+        shell: bash
+        env:
+          CHANGED_FILES_ONLY: ${{ inputs.changed_files_only }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -euo pipefail
+          rm -f .reasoning-trace-files.txt
+          if [[ "${CHANGED_FILES_ONLY}" == "true" && "${EVENT_NAME}" == "pull_request" && -n "${PR_BASE_SHA}" ]]; then
+            git diff --name-only --diff-filter=ACMR "${PR_BASE_SHA}"...HEAD > .reasoning-trace-files.txt
+            echo "files_from=--files-from .reasoning-trace-files.txt" >> "$GITHUB_OUTPUT"
+            echo "Scanning $(wc -l < .reasoning-trace-files.txt) changed files from this pull request."
+          else
+            echo "files_from=" >> "$GITHUB_OUTPUT"
+            echo "Scanning the full repository."
+          fi
+
+      - name: Scan for plausible reasoning traces
+        shell: bash
+        run: |
+          python3 .reasoning-trace-audit/scanner/scan_reasoning_traces.py . \
+            --policy .reasoning-trace-audit/scanner/patterns.json \
+            --json-out reasoning-trace-report.json \
+            --fail-on "${{ inputs.fail_on }}" \
+            ${{ steps.scope.outputs.files_from }}
+
+      - name: Upload scan report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reasoning-trace-report-${{ github.run_id }}
+          path: reasoning-trace-report.json
+          if-no-files-found: warn
+          retention-days: 30
