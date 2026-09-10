@@ -1,0 +1,18 @@
+name: Scanner Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run regression tests
+        run: python3 -m unittest scanner/test_scan_reasoning_traces.py -v
