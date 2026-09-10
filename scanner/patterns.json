@@ -13,6 +13,7 @@
   ],
   "exclude_globs": [
     ".git/**",
+    ".reasoning-trace-audit/**",
     "node_modules/**",
     "dist/**",
     "build/**",
